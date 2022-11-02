@@ -1,22 +1,22 @@
 A parser that parse go structures to prometheus exposition format. It uses the go structure tags to identify the type of prometheus metric for each <br>
 entry in the struct field.
-<br>
-<pre>
+
+
 type <structName> struct {
  Field1 <dataType> `type:<metricType> metric:<metricName>`
 }
-</pre>
-<br>
-For type histogram, The field has to have datatype to structure that has fields with tag "le" representing their less than or equal to bucket.<br>
-<pre>
+
+For type histogram, The field has to have datatype to structure that has fields with tag "le" representing their less than or equal to bucket.
+
 type Histogram struct {
  Num0 int `le:0`
  Num2 int `le:2`
  Num4 int `le:4`
 }
+
 type Export struct {
  Field1 Histogram `type:"Histogram" metric:"Field1"`
 }
-</pre>
+
 
 
