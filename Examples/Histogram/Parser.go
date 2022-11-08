@@ -1,57 +1,35 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	prometheus_handler "handler/prometheus"
-	"io/ioutil"
-	"os"
 	"strconv"
-	"strings"
 )
 
-type Bpftrace struct {
-	Data struct {
-		Usecs []struct {
-			Count int `json:"count"`
-			Max   int `json:"max"`
-			Min   int `json:"min"`
-		} `json:"@usecs"`
-	} `json:"data"`
-	Type string `json:"type"`
+type Histogram struct {
+	Num0 int `le:0`
+	Num2 int `le:2`
+	Num4 int `le:4`
 }
 
-type BpftraceHistogram struct {
-	Hist map[string]int `type:"histogram" metric:"hist"`
+type Export struct {
+	Field1 map[string]int `type:"histogram" metric:"Field1"`
 }
 
-var OutputFilename = "Histogram_Example.json"
 var Result string
 
 func main() {
-	fp, err := os.Open(OutputFilename)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer fp.Close()
-	bpftraceData, err := ioutil.ReadAll(fp)
-	if err != nil {
-		fmt.Println(err)
-	}
-	if len(bpftraceData) >= 1 {
-		line := strings.Split(string(bpftraceData), "\n")
-		var dt Bpftrace
-		err = json.Unmarshal([]byte(line[0]), &dt)
-		if err != nil {
-			fmt.Println(err)
-		}
-		var histmap = make(map[string]int)
-		for i := 0; i < len(dt.Data.Usecs); i++ {
-			histmap[strconv.Itoa(dt.Data.Usecs[i].Max+1)] = dt.Data.Usecs[i].Count
-		}
-		fmt.Println(histmap)
-		var ht BpftraceHistogram
-		ht.Hist = histmap
-		Result = prometheus_handler.GenericPromDataParser(ht)
-	}
+	var Hist Histogram
+	Hist.Num0 = 1
+	Hist.Num2 = 2
+	Hist.Num4 = 3
+	var histmap = make(map[string]int)
+	histmap[strconv.Itoa(Hist.Num0)] = Hist.Num2
+	histmap[strconv.Itoa(Hist.Num2)] = Hist.Num4
+	histmap[strconv.Itoa(Hist.Num4)] = Hist.Num0
+	fmt.Println(histmap)
+	var ht Export
+	ht.Field1 = histmap
+	result := prometheus_handler.GenericPromDataParser(ht)
+	fmt.Println(result)
 }
