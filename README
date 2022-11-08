@@ -1,4 +1,4 @@
-A parser that parse go structures to prometheus exposition format. It uses the go structure tags to identify the type of prometheus metric for each
+A parser that parse go structures to prometheus exposition format. For now, we only support data models Counter, Gauge and Histogram. It uses the go structure tags to identify the type of prometheus metric for each
 entry in the struct field. Note : This parsers only parses provide text output, Its responsibilty of the user to start the http service to publish
 the text in /metrics.
 
@@ -7,22 +7,15 @@ type <structName> struct {
  Field1 <dataType> `type:<metricType> metric:<metricName>`
 }
 
-For type histogram, The field has to have datatype to structure that has fields with tag "le" representing their less than or equal to bucket.
-
-type Histogram struct {
- Num0 int `le:0`
- Num2 int `le:2`
- Num4 int `le:4`
-}
+Following provides examples of different metric types we support. 
 
 type Export struct {
- Field1 Histogram `type:"Histogram" metric:"Field1"`
+ Field1 map[string]int `type:"Histogram" metric:"Field1"`
+ Field2 int `type:"Counter" metric:"Field2"`
+ Field3 int `type:"Gauge" metric:"Field3"`
 }
 
 
 To use this library user has to pass the structure defined as per above guidelines and filled with values to following function
-func GenericPromDataParser(structure interface{}, labels map[string]string) string
+func GenericPromDataParser(structure interface{}) string
 The above function expects two arguments the structure to be parsed and labels to be added to all metrics
-
-
-
