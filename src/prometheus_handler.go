@@ -8,7 +8,6 @@ import (
 	//"strings"
 )
 
-
 /*
 type prometheusClient struct {
 	HTTPoutput string
@@ -24,26 +23,26 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	inter := histogram.Interface()
 	histoMap := inter.(map[string]int)
 	totalObservation := 0
-	for _,value := range histoMap {
+	for _, value := range histoMap {
 		totalObservation += value
 	}
 	histoMap["+inf"] = totalObservation
 
 	return histoMap
 	/*
-	histoMap := make(map[string]string)
-	totalObservation := 0
-	for i := 0; i < histogram.NumField(); i++ {
-		bucketBound := histogramType.Field(i)
-		bucketValue := histogram.Field(i)
-		count := int(bucketValue.Int())
-		upperBound := strings.Split(bucketBound.Tag.Get("json"), ",")[0]
-		histoMap[upperBound] = fmt.Sprintf("%v", bucketValue)
+		histoMap := make(map[string]string)
+		totalObservation := 0
+		for i := 0; i < histogram.NumField(); i++ {
+			bucketBound := histogramType.Field(i)
+			bucketValue := histogram.Field(i)
+			count := int(bucketValue.Int())
+			upperBound := strings.Split(bucketBound.Tag.Get("json"), ",")[0]
+			histoMap[upperBound] = fmt.Sprintf("%v", bucketValue)
 
-		totalObservation += count
-	}
-	histoMap["+inf"] = strconv.Itoa(int(totalObservation))
-	return histoMap
+			totalObservation += count
+		}
+		histoMap["+inf"] = strconv.Itoa(int(totalObservation))
+		return histoMap
 	*/
 }
 
@@ -62,7 +61,8 @@ func makePromUntype(label string, value reflect.Value) string {
 func makePromCounter(label string, count string) string {
 	output := fmt.Sprintf(`
 # HELP %s output
-# TYPE %s counter\n`, label, label)
+# TYPE %s counter
+`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, count)
 	return entry + "\n"
 }
@@ -88,13 +88,13 @@ func makePromHistogram(label string, histogram map[string]int) string {
 	return output
 }
 
-
 func makePromGauge(label string, value string) string {
 	output := fmt.Sprintf(`
 # HELP %s gauge output
-# TYPE %s gauge\n`, label, label)
+# TYPE %s gauge
+`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, value)
-        return entry + "\n"
+	return entry + "\n"
 }
 
 func GenericPromDataParser(structure interface{}) string {

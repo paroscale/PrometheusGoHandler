@@ -24,9 +24,9 @@ type Histogram struct {
 
 ```go
 type Export struct {
- Field1 map[string]int `type:"Histogram" metric:"Field1"`
- Field2 int `type:"Counter" metric:"Field2"`
- Field3 int `type:"Gauge" metric:"Field3"`
+ Field1 map[string]int `type:"histogram" metric:"Field1"`
+ Field2 int `type:"counter" metric:"Field2"`
+ Field3 int `type:"gauge" metric:"Field3"`
 }
 ```
 
