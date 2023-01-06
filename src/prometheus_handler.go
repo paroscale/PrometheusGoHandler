@@ -4,9 +4,16 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	//"strconv"
 	//"strings"
 )
+
+type HandlerStructure []struct {
+	Structure interface{}
+	Datatype  string
+	Labelname string
+}
 
 /*
 type prometheusClient struct {
@@ -67,7 +74,7 @@ func makePromCounter(label string, count string) string {
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int) string {
+func makePromHistogram(label string, histogram map[string]int, datatype string, labelname string) string {
 	output := fmt.Sprintf(`
 # HELP %s histogram output
 # TYPE %s histogram`, label, label)
@@ -80,7 +87,7 @@ func makePromHistogram(label string, histogram map[string]int) string {
 	sort.Strings(bounds)
 
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s"} %d`, label, bound, histogram[bound])
+		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(labelname, ".bt"), datatype, histogram[bound])
 		output += "\n" + entry
 	}
 	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
@@ -97,33 +104,38 @@ func makePromGauge(label string, value string) string {
 	return entry + "\n"
 }
 
-func GenericPromDataParser(structure interface{}) string {
-	var op string
+func GenericPromDataParser(structure HandlerStructure) string {
+	var data string
+	for i := 0; i < len(structure); i++ {
+		{
+			var op string
+			//Reflect the struct
+			typeExtract := reflect.TypeOf(structure[i].Structure)
+			valueExtract := reflect.ValueOf(structure[i].Structure)
 
-	//Reflect the struct
-	typeExtract := reflect.TypeOf(structure)
-	valueExtract := reflect.ValueOf(structure)
+			//Iterating over fields and compress their values
+			for i := 0; i < typeExtract.NumField(); i++ {
+				fieldType := typeExtract.Field(i)
+				fieldValue := valueExtract.Field(i)
 
-	//Iterating over fields and compress their values
-	for i := 0; i < typeExtract.NumField(); i++ {
-		fieldType := typeExtract.Field(i)
-		fieldValue := valueExtract.Field(i)
-
-		promType := fieldType.Tag.Get("type")
-		promLabel := fieldType.Tag.Get("metric")
-		switch promType {
-		case "histogram":
-			histogram := parseHistogram(fieldValue)
-			op += makePromHistogram(promLabel, histogram)
-		case "counter":
-			count := parseCounter(fieldValue)
-			op += makePromCounter(promLabel, count)
-		case "gauge":
-			value := parseGauge(fieldValue)
-			op += makePromGauge(promLabel, value)
-		case "untype":
-			op += makePromUntype(promLabel, fieldValue)
+				promType := fieldType.Tag.Get("type")
+				promLabel := fieldType.Tag.Get("metric")
+				switch promType {
+				case "histogram":
+					histogram := parseHistogram(fieldValue)
+					op += makePromHistogram(promLabel, histogram, structure[i].Datatype, structure[i].Labelname)
+				case "counter":
+					count := parseCounter(fieldValue)
+					op += makePromCounter(promLabel, count)
+				case "gauge":
+					value := parseGauge(fieldValue)
+					op += makePromGauge(promLabel, value)
+				case "untype":
+					op += makePromUntype(promLabel, fieldValue)
+				}
+			}
+			data = data + op
 		}
 	}
-	return op
+	return data
 }
