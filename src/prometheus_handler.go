@@ -11,8 +11,8 @@ import (
 
 type HandlerStructure []struct {
 	Structure interface{}
-	Datatype  string
-	Labelname string
+	DataType  string
+	LabelName string
 }
 
 /*
@@ -74,7 +74,8 @@ func makePromCounter(label string, count string) string {
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int, datatype string, labelname string) string {
+func makePromHistogram(label string, histogram map[string]int, dataType string,
+	labelName string) string {
 	output := fmt.Sprintf(`
 # HELP %s histogram output
 # TYPE %s histogram`, label, label)
@@ -87,7 +88,8 @@ func makePromHistogram(label string, histogram map[string]int, datatype string, 
 	sort.Strings(bounds)
 
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(labelname, ".bt"), datatype, histogram[bound])
+		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound,
+			strings.TrimRight(labelName, ".bt"), dataType, histogram[bound])
 		output += "\n" + entry
 	}
 	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
@@ -123,7 +125,8 @@ func GenericPromDataParser(structure HandlerStructure) string {
 				switch promType {
 				case "histogram":
 					histogram := parseHistogram(fieldValue)
-					op += makePromHistogram(promLabel, histogram, structure[i].Datatype, structure[i].Labelname)
+					op += makePromHistogram(promLabel, histogram,
+						structure[i].DataType, structure[i].LabelName)
 				case "counter":
 					count := parseCounter(fieldValue)
 					op += makePromCounter(promLabel, count)
