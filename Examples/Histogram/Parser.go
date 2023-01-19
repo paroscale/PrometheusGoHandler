@@ -17,9 +17,12 @@ type Export struct {
 }
 
 var Result string
+var addToHandler prometheus_handler.HandlerStructure
 
 func main() {
 	var Hist Histogram
+	dataType := "AnyDataTypeString"
+	labelName := "AnyLableNameString"
 	Hist.Num0 = 1
 	Hist.Num2 = 2
 	Hist.Num4 = 3
@@ -30,6 +33,11 @@ func main() {
 	fmt.Println(histmap)
 	var ht Export
 	ht.Field1 = histmap
-	result := prometheus_handler.GenericPromDataParser(ht)
+	addToHandler = append(addToHandler, struct {
+		Structure interface{}
+		DataType  string
+		LabelName string
+	}{Structure: ht, DataType: dataType, LabelName: labelName})
+	result := prometheus_handler.GenericPromDataParser(addToHandler)
 	fmt.Println(result)
 }
