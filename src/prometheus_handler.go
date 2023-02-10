@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	//"strconv"
-	//"strings"
 )
 
 type HandlerStructure []struct {
@@ -14,13 +12,6 @@ type HandlerStructure []struct {
 	DataType  string
 	LabelName string
 }
-
-/*
-type prometheusClient struct {
-	HTTPoutput string
-	Label map[string]string
-}
-*/
 
 func parseCounter(count reflect.Value) string {
 	return fmt.Sprintf("%v", count)
@@ -36,21 +27,6 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	histoMap["+inf"] = totalObservation
 
 	return histoMap
-	/*
-		histoMap := make(map[string]string)
-		totalObservation := 0
-		for i := 0; i < histogram.NumField(); i++ {
-			bucketBound := histogramType.Field(i)
-			bucketValue := histogram.Field(i)
-			count := int(bucketValue.Int())
-			upperBound := strings.Split(bucketBound.Tag.Get("json"), ",")[0]
-			histoMap[upperBound] = fmt.Sprintf("%v", bucketValue)
-
-			totalObservation += count
-		}
-		histoMap["+inf"] = strconv.Itoa(int(totalObservation))
-		return histoMap
-	*/
 }
 
 func parseGauge(gauge reflect.Value) string {
