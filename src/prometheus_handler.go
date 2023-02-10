@@ -5,22 +5,16 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"regexp"
 	//"strconv"
 	//"strings"
 )
 
 type HandlerStructure []struct {
 	Structure interface{}
-	DataType  string
-	LabelName string
+	Datatype  string
+	Labelname string
 }
-
-/*
-type prometheusClient struct {
-	HTTPoutput string
-	Label map[string]string
-}
-*/
 
 func parseCounter(count reflect.Value) string {
 	return fmt.Sprintf("%v", count)
@@ -36,21 +30,6 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	histoMap["+inf"] = totalObservation
 
 	return histoMap
-	/*
-		histoMap := make(map[string]string)
-		totalObservation := 0
-		for i := 0; i < histogram.NumField(); i++ {
-			bucketBound := histogramType.Field(i)
-			bucketValue := histogram.Field(i)
-			count := int(bucketValue.Int())
-			upperBound := strings.Split(bucketBound.Tag.Get("json"), ",")[0]
-			histoMap[upperBound] = fmt.Sprintf("%v", bucketValue)
-
-			totalObservation += count
-		}
-		histoMap["+inf"] = strconv.Itoa(int(totalObservation))
-		return histoMap
-	*/
 }
 
 func parseGauge(gauge reflect.Value) string {
@@ -67,15 +46,17 @@ func makePromUntype(label string, value reflect.Value) string {
 
 func makePromCounter(label string, count string) string {
 	output := fmt.Sprintf(`
-# HELP %s output
-# TYPE %s counter
-`, label, label)
+# HELP %s outputr cell such that its distance to the nearest land cell is maximized, and return the distance. If no land or water exists in the grid, return -1.
+
+The distance used in this problem is the Manhattan distance: the distance between two cells (x0, y0) and (x1, y1) is |x0 - x1| + |y0 - y1|.
+
+ 
+# TYPE %s counter\n`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, count)
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int, dataType string,
-	labelName string) string {
+func makePromHistogram(label string, histogram map[string]int, datatype string, labelname string) string {
 	output := fmt.Sprintf(`
 # HELP %s histogram output
 # TYPE %s histogram`, label, label)
@@ -86,10 +67,12 @@ func makePromHistogram(label string, histogram map[string]int, dataType string,
 		bounds = append(bounds, bound)
 	}
 	sort.Strings(bounds)
-
+	labelname = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(labelname, "")
+	if datatype=="1"{
+		datatype=labelname
+	}
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound,
-			strings.TrimRight(labelName, ".bt"), dataType, histogram[bound])
+		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(labelname, "bt"), datatype, histogram[bound])
 		output += "\n" + entry
 	}
 	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
@@ -100,20 +83,19 @@ func makePromHistogram(label string, histogram map[string]int, dataType string,
 func makePromGauge(label string, value string) string {
 	output := fmt.Sprintf(`
 # HELP %s gauge output
-# TYPE %s gauge
-`, label, label)
+# TYPE %s gauge\n`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, value)
 	return entry + "\n"
 }
 
 func GenericPromDataParser(structure HandlerStructure) string {
 	var data string
-	for i := 0; i < len(structure); i++ {
+	for j := 0; j < len(structure); j++ {
 		{
 			var op string
 			//Reflect the struct
-			typeExtract := reflect.TypeOf(structure[i].Structure)
-			valueExtract := reflect.ValueOf(structure[i].Structure)
+			typeExtract := reflect.TypeOf(structure[j].Structure)
+			valueExtract := reflect.ValueOf(structure[j].Structure)
 
 			//Iterating over fields and compress their values
 			for i := 0; i < typeExtract.NumField(); i++ {
@@ -125,8 +107,7 @@ func GenericPromDataParser(structure HandlerStructure) string {
 				switch promType {
 				case "histogram":
 					histogram := parseHistogram(fieldValue)
-					op += makePromHistogram(promLabel, histogram,
-						structure[i].DataType, structure[i].LabelName)
+					op += makePromHistogram(promLabel, histogram, structure[j].Datatype, structure[j].Labelname)
 				case "counter":
 					count := parseCounter(fieldValue)
 					op += makePromCounter(promLabel, count)
