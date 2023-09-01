@@ -27,7 +27,9 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	for _, value := range histoMap {
 		totalObservation += value
 	}
-	histoMap["+inf"] = totalObservation
+	if len(histoMap)>0 {
+		histoMap["+inf"] = totalObservation
+	}
 
 	return histoMap
 }
@@ -83,7 +85,8 @@ func makePromHistogram(label string, histogram map[string]int, datatype string, 
 func makePromGauge(label string, value string) string {
 	output := fmt.Sprintf(`
 # HELP %s gauge output
-# TYPE %s gauge\n`, label, label)
+# TYPE %s gauge 
+`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, value)
 	return entry + "\n"
 }
