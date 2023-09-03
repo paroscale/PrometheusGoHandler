@@ -6,15 +6,18 @@ import (
 	"time"
 )
 
-type Export struct {
-	Field1 int `type:"counter" metric:"Field1"`
-}
-
 func main() {
-	var ht Export
+	var addToHandler prometheus_handler.HandlerStructure
 	for i := 0; i < 10; i++ {
-		ht.Field1 = i
-		result := prometheus_handler.GenericPromDataParser(ht)
+		addToHandler = append(addToHandler, struct {
+			MType   int
+			MName   string
+			MLName  string
+			MLValue string
+			MValue  interface{}
+		}{MType: prometheus_handler.COUNTER, MName: "Field1", MValue: i})
+		result := prometheus_handler.GenericPromDataParser(addToHandler)
+		addToHandler = nil
 		fmt.Println(result)
 		time.Sleep(2 * time.Second)
 	}

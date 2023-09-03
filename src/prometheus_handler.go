@@ -3,17 +3,26 @@ package prometheus_handler
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
-	"regexp"
 	//"strconv"
 	//"strings"
 )
 
+const (
+	HISTOGRAM = 0
+	COUNTER   = 1
+	GAUGE     = 2
+	UNTYPE    = 3
+)
+
 type HandlerStructure []struct {
-	Structure interface{}
-	Datatype  string
-	Labelname string
+	MType   int
+	MName   string
+	MLName  string
+	MLValue string
+	MValue  interface{}
 }
 
 func parseCounter(count reflect.Value) string {
@@ -27,7 +36,7 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	for _, value := range histoMap {
 		totalObservation += value
 	}
-	if len(histoMap)>0 {
+	if len(histoMap) > 0 {
 		histoMap["+inf"] = totalObservation
 	}
 
@@ -48,17 +57,14 @@ func makePromUntype(label string, value reflect.Value) string {
 
 func makePromCounter(label string, count string) string {
 	output := fmt.Sprintf(`
-# HELP %s outputr cell such that its distance to the nearest land cell is maximized, and return the distance. If no land or water exists in the grid, return -1.
-
-The distance used in this problem is the Manhattan distance: the distance between two cells (x0, y0) and (x1, y1) is |x0 - x1| + |y0 - y1|.
-
- 
-# TYPE %s counter\n`, label, label)
+# HELP %s counter output
+# TYPE %s counter
+`, label, label)
 	entry := fmt.Sprintf(`%s%s %s`, output, label, count)
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int, datatype string, labelname string) string {
+func makePromHistogram(label string, histogram map[string]int, MLName string, MLValue string) string {
 	output := fmt.Sprintf(`
 # HELP %s histogram output
 # TYPE %s histogram`, label, label)
@@ -69,12 +75,12 @@ func makePromHistogram(label string, histogram map[string]int, datatype string, 
 		bounds = append(bounds, bound)
 	}
 	sort.Strings(bounds)
-	labelname = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(labelname, "")
-	if datatype=="1"{
-		datatype=labelname
+	MLName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(MLName, "")
+	if MLValue == "1" {
+		MLValue = MLName
 	}
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(labelname, "bt"), datatype, histogram[bound])
+		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(MLName, "bt"), MLValue, histogram[bound])
 		output += "\n" + entry
 	}
 	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
@@ -93,33 +99,24 @@ func makePromGauge(label string, value string) string {
 
 func GenericPromDataParser(structure HandlerStructure) string {
 	var data string
-	for j := 0; j < len(structure); j++ {
+	for i := 0; i < len(structure); i++ {
 		{
 			var op string
-			//Reflect the struct
-			typeExtract := reflect.TypeOf(structure[j].Structure)
-			valueExtract := reflect.ValueOf(structure[j].Structure)
-
-			//Iterating over fields and compress their values
-			for i := 0; i < typeExtract.NumField(); i++ {
-				fieldType := typeExtract.Field(i)
-				fieldValue := valueExtract.Field(i)
-
-				promType := fieldType.Tag.Get("type")
-				promLabel := fieldType.Tag.Get("metric")
-				switch promType {
-				case "histogram":
-					histogram := parseHistogram(fieldValue)
-					op += makePromHistogram(promLabel, histogram, structure[j].Datatype, structure[j].Labelname)
-				case "counter":
-					count := parseCounter(fieldValue)
-					op += makePromCounter(promLabel, count)
-				case "gauge":
-					value := parseGauge(fieldValue)
-					op += makePromGauge(promLabel, value)
-				case "untype":
-					op += makePromUntype(promLabel, fieldValue)
-				}
+			fieldValue := reflect.ValueOf(structure[i].MValue)
+			promType := structure[i].MType
+			promLabel := structure[i].MName
+			switch promType {
+			case HISTOGRAM:
+				histogram := parseHistogram(fieldValue)
+				op += makePromHistogram(promLabel, histogram, structure[i].MLName, structure[i].MLValue)
+			case COUNTER:
+				count := parseCounter(fieldValue)
+				op += makePromCounter(promLabel, count)
+			case GAUGE:
+				value := parseGauge(fieldValue)
+				op += makePromGauge(promLabel, value)
+			case UNTYPE:
+				op += makePromUntype(promLabel, fieldValue)
 			}
 			data = data + op
 		}

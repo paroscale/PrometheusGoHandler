@@ -12,10 +12,6 @@ type Histogram struct {
 	Num4 int `le:4`
 }
 
-type Export struct {
-	Field1 map[string]int `type:"histogram" metric:"Field1"`
-}
-
 var Result string
 var addToHandler prometheus_handler.HandlerStructure
 
@@ -31,13 +27,13 @@ func main() {
 	histmap[strconv.Itoa(Hist.Num2)] = Hist.Num4
 	histmap[strconv.Itoa(Hist.Num4)] = Hist.Num0
 	fmt.Println(histmap)
-	var ht Export
-	ht.Field1 = histmap
 	addToHandler = append(addToHandler, struct {
-		Structure interface{}
-		DataType  string
-		LabelName string
-	}{Structure: ht, DataType: dataType, LabelName: labelName})
+		MType   int
+		MName   string
+		MLName  string
+		MLValue string
+		MValue  interface{}
+	}{MType: prometheus_handler.HISTOGRAM, MName: "Field1", MValue: histmap, MLValue: dataType, MLName: labelName})
 	result := prometheus_handler.GenericPromDataParser(addToHandler)
 	fmt.Println(result)
 }
