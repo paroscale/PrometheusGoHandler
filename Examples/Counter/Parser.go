@@ -15,7 +15,7 @@ func main() {
 			MLName  string
 			MLValue string
 			MValue  interface{}
-		}{MType: prometheus_handler.COUNTER, MName: "Field1", MValue: i})
+		}{MType: prometheus_handler.COUNTER, MName: "Field1", MValue: i, MLName: "counter", MLValue: "test counter"})
 		result := prometheus_handler.GenericPromDataParser(addToHandler)
 		addToHandler = nil
 		fmt.Println(result)

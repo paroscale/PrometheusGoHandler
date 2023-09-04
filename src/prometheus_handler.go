@@ -55,12 +55,17 @@ func makePromUntype(label string, value reflect.Value) string {
 	return output
 }
 
-func makePromCounter(label string, count string) string {
+func makePromCounter(label string, count string, MLName string, MLValue string) string {
+	var entry string
 	output := fmt.Sprintf(`
 # HELP %s counter output
 # TYPE %s counter
 `, label, label)
-	entry := fmt.Sprintf(`%s%s %s`, output, label, count)
+	if len(MLName) > 0 {
+		entry = fmt.Sprintf(`%s%s{%s="%s"} %s`, output, label, MLName, MLValue, count)
+	} else {
+		entry = fmt.Sprintf(`%s%s %s`, output, label, count)
+	}
 	return entry + "\n"
 }
 
@@ -88,12 +93,17 @@ func makePromHistogram(label string, histogram map[string]int, MLName string, ML
 	return output
 }
 
-func makePromGauge(label string, value string) string {
+func makePromGauge(label string, value string, MLName string, MLValue string) string {
+	var entry string
 	output := fmt.Sprintf(`
 # HELP %s gauge output
 # TYPE %s gauge 
 `, label, label)
-	entry := fmt.Sprintf(`%s%s %s`, output, label, value)
+	if len(MLName) > 0 {
+		entry = fmt.Sprintf(`%s%s{%s="%s"} %s`, output, label, MLName, MLValue, value)
+	} else {
+		entry = fmt.Sprintf(`%s%s %s`, output, label, value)
+	}
 	return entry + "\n"
 }
 
@@ -111,10 +121,10 @@ func GenericPromDataParser(structure HandlerStructure) string {
 				op += makePromHistogram(promLabel, histogram, structure[i].MLName, structure[i].MLValue)
 			case COUNTER:
 				count := parseCounter(fieldValue)
-				op += makePromCounter(promLabel, count)
+				op += makePromCounter(promLabel, count, structure[i].MLName, structure[i].MLValue)
 			case GAUGE:
 				value := parseGauge(fieldValue)
-				op += makePromGauge(promLabel, value)
+				op += makePromGauge(promLabel, value, structure[i].MLName, structure[i].MLValue)
 			case UNTYPE:
 				op += makePromUntype(promLabel, fieldValue)
 			}
