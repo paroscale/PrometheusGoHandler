@@ -1,14 +1,15 @@
-A parser that parse go structures to prometheus exposition format. For now, we only support data models Counter, Gauge and Histogram. It uses the go structure tags to identify the type of prometheus metric for each
-entry in the struct field. Note : This parsers only parses provide text output, Its responsibilty of the user to start the http service to publish
+A parser that parses go structures to prometheus exposition format. For now, we only support data models Counter, Gauge and Histogram.  
+Note : This parsers only parses provide text output, Its responsibilty of the user to start the http service to publish
 the text in /metrics.
 
-constants defined 
-	HISTOGRAM 
-	GAUGE 
-	COUNTER
-	UNTYPE
+- Constants Defined 
+		HISTOGRAM 
+		GAUGE 
+		COUNTER
+		UNTYPE
+	
+- Append data to variable of type HandlerStructure
 
-var addToHandler prometheus_handler.HandlerStructure
 addToHandler = append(addToHandler, struct {
 	MType   int
 	MName   string
@@ -19,4 +20,3 @@ addToHandler = append(addToHandler, struct {
 
 To use this library user has to pass the structure defined as per above guidelines and filled with values to following function
 func GenericPromDataParser(structure HandlerStructure) string
-The above function expects two arguments the structure to be parsed and labels to be added to all metrics
