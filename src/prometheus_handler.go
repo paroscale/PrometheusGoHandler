@@ -10,19 +10,19 @@ import (
 	//"strings"
 )
 
-const (
+const (				// constants defined for Metrics
 	HISTOGRAM = 0
 	COUNTER   = 1
 	GAUGE     = 2
 	UNTYPE    = 3
 )
 
-type HandlerStructure []struct {
-	MType   int
-	MName   string
-	MLName  string
-	MLValue string
-	MValue  interface{}
+type HandlerStructure []struct {		
+	MType   int				// Field to store the Metric Type
+	MName   string			// Field to store Metric Name 
+	MLName  string			// Field to store MetricLabel Name
+	MLValue string			// Field to store MetricLabel Value
+	MValue  interface{}		// Field to store Metric Value
 }
 
 func parseCounter(count reflect.Value) string {
@@ -112,9 +112,9 @@ func GenericPromDataParser(structure HandlerStructure) string {
 	for i := 0; i < len(structure); i++ {
 		{
 			var op string
-			fieldValue := reflect.ValueOf(structure[i].MValue)
-			promType := structure[i].MType
-			promLabel := structure[i].MName
+			promType := structure[i].MType			// Gets the MetricType from HandlerStructure Structure
+			promLabel := structure[i].MName			// Gets the MetricName from HandlerStructure Structure
+			fieldValue := reflect.ValueOf(structure[i].MValue)	// Gets the MetricValue from HandlerStructure Structur		
 			switch promType {
 			case HISTOGRAM:
 				histogram := parseHistogram(fieldValue)

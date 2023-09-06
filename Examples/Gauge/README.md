@@ -3,22 +3,31 @@
 
 To Import a Gauge using the Promethues Handler, Follow the Steps Below.
 
-- As the Export Type will be Gauge, we need to Create a Export Structure to have type as `int`.
+- Create a variable of type HandleStructure
+	type HandlerStructure []struct {
+		MType   int
+		MName   string
+		MLName  string
+		MLValue string
+		MValue  interface{}
+	}
+	var addToHandler prometheus_handler.HandlerStructure
 
-```go
-type Export struct {
- Field1 map[string]int `type:"histogram" metric:"Field1"`
- Field2 int `type:"counter" metric:"Field2"`
- Field3 int `type:"gauge" metric:"Field3"`
-}
-```
+- Append the data to HandlerStructure
+	addToHandler = append(addToHandler, struct {
+			MType   int
+			MName   string
+			MLName  string
+			MLValue string
+			MValue  interface{}
+		}{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 20, MLValue: dataType, MLName: labelName})
 
-- Pass the `var Gauge int` to the Export Structure and then pass the Structure to `func GenericPromDataParser(structure interface{}) string`
+- Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the MTYPE field to GAUGE
 
 - In `func GenericPromDataParser`
 
-	- First the Function will look into the `type` field to determine what type of Parser Function needs to be called. In our case as it'll be Gauge, `func parseGauge` will be called.
-	- It'll convert the Gauge to the required type and return back to the `GenericPromDataParser`.
+	- First the Function will look into the `MTYPE` field to determine what type of Parser Function needs to be called. In our case as it'll be GAUGE, `func parseGauge` will be called.
+	- It'll go through the Map and Create a Gauge which will be returned back to the `GenericPromDataParser`.
 	- Then `func makePromGauge` will be called with the Gauge and `metric` field value.
 	- This Function will create the Strings which Promethues can Parse easily and returns the Output which could be posted on the Port where Promethues reads the data from.
 
@@ -28,6 +37,7 @@ type Export struct {
 
 - This is the Output which will be given back from `func GenericPromDataParser`
 
+## Without Label
 ```
 # HELP Field1 gauge output
 # TYPE Field1 gauge
@@ -73,4 +83,12 @@ Field1 2
 # HELP Field1 gauge output
 # TYPE Field1 gauge
 Field1 1
+```
+
+## With Label
+
+```
+# HELP Field1 gauge output
+# TYPE Field1 gauge 
+Field1{label="labelValue"} 0
 ```
