@@ -3,20 +3,22 @@ Note : This parsers only parses provide text output, Its responsibilty of the us
 the text in /metrics.
 
 - Constants Defined 
-		HISTOGRAM 
-		GAUGE 
-		COUNTER
-		UNTYPE
-	
+```
+	HISTOGRAM 
+	GAUGE 
+	COUNTER
+	UNTYPE
+```
 - Append data to variable of type HandlerStructure
 
-addToHandler = append(addToHandler, struct {
-	MType   int
-	MName   string
-	MLName  string
-	MLValue string
-	MValue  interface{}
-}{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 2, MLValue: "labelvalue", MLName: "labelname"})
-
+```
+    addToHandler = append(addToHandler, struct {
+       MType   int
+	   MName   string
+	   MLName  string
+	   MLValue string
+	   MValue  interface{}
+    }{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 2, MLValue: "labelvalue", MLName: "labelname"})
+```
 To use this library user has to pass the structure defined as per above guidelines and filled with values to following function
 func GenericPromDataParser(structure HandlerStructure) string

@@ -4,6 +4,7 @@
 To Import a Gauge using the Promethues Handler, Follow the Steps Below.
 
 - Create a variable of type HandleStructure
+```
 	type HandlerStructure []struct {
 		MType   int
 		MName   string
@@ -12,8 +13,10 @@ To Import a Gauge using the Promethues Handler, Follow the Steps Below.
 		MValue  interface{}
 	}
 	var addToHandler prometheus_handler.HandlerStructure
+```
 
 - Append the data to HandlerStructure
+```
 	addToHandler = append(addToHandler, struct {
 			MType   int
 			MName   string
@@ -21,8 +24,8 @@ To Import a Gauge using the Promethues Handler, Follow the Steps Below.
 			MLValue string
 			MValue  interface{}
 		}{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 20, MLValue: dataType, MLName: labelName})
-
-- Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the MTYPE field to GAUGE
+```
+- Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the `MTYPE` field to `GAUGE`
 
 - In `func GenericPromDataParser`
 

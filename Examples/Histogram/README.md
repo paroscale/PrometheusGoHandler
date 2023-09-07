@@ -4,6 +4,7 @@
 To Import a Histogram using the Promethues Handler, Follow the Steps Below.
 
 - Create a variable of type HandleStructure
+```
 	type HandlerStructure []struct {
 		MType   int
 		MName   string
@@ -12,8 +13,9 @@ To Import a Histogram using the Promethues Handler, Follow the Steps Below.
 		MValue  interface{}
 	}
 	var addToHandler prometheus_handler.HandlerStructure
-	
+```
 - Append the data to HandlerStructure
+```
 	addToHandler = append(addToHandler, struct {
 			MType   int
 			MName   string
@@ -21,8 +23,8 @@ To Import a Histogram using the Promethues Handler, Follow the Steps Below.
 			MLValue string
 			MValue  interface{}
 		}{MType: prometheus_handler.HISTOGRAM, MName: "Field1", MValue: histmap, MLValue: dataType, MLName: labelName})
-
-- Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the MTYPE field to HISTOGRAM
+```
+- Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the `MTYPE` field to `HISTOGRAM`
 
 - In `func GenericPromDataParser`
 
