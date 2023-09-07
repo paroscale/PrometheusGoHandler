@@ -3,17 +3,26 @@ package prometheus_handler
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
-	"regexp"
 	//"strconv"
 	//"strings"
 )
 
-type HandlerStructure []struct {
-	Structure interface{}
-	Datatype  string
-	Labelname string
+const (				// constants defined for Metrics
+	HISTOGRAM = 0
+	COUNTER   = 1
+	GAUGE     = 2
+	UNTYPE    = 3
+)
+
+type HandlerStructure []struct {		
+	MType   int				// Field to store the Metric Type
+	MName   string			// Field to store Metric Name 
+	MLName  string			// Field to store MetricLabel Name
+	MLValue string			// Field to store MetricLabel Value
+	MValue  interface{}		// Field to store Metric Value
 }
 
 func parseCounter(count reflect.Value) string {
@@ -27,7 +36,9 @@ func parseHistogram(histogram reflect.Value) map[string]int {
 	for _, value := range histoMap {
 		totalObservation += value
 	}
-	histoMap["+inf"] = totalObservation
+	if len(histoMap) > 0 {
+		histoMap["+inf"] = totalObservation
+	}
 
 	return histoMap
 }
@@ -44,19 +55,20 @@ func makePromUntype(label string, value reflect.Value) string {
 	return output
 }
 
-func makePromCounter(label string, count string) string {
+func makePromCounter(label string, count string, MLName string, MLValue string) string {
+	var entry string
 	output := fmt.Sprintf(`
-# HELP %s outputr cell such that its distance to the nearest land cell is maximized, and return the distance. If no land or water exists in the grid, return -1.
-
-The distance used in this problem is the Manhattan distance: the distance between two cells (x0, y0) and (x1, y1) is |x0 - x1| + |y0 - y1|.
-
- 
-# TYPE %s counter\n`, label, label)
-	entry := fmt.Sprintf(`%s%s %s`, output, label, count)
+# HELP %s counter output
+# TYPE %s counter`, label, label)
+	if len(MLName) > 0 {
+		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, count)
+	} else {
+		entry = fmt.Sprintf("%s\n%s %s", output, label, count)
+	}
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int, datatype string, labelname string) string {
+func makePromHistogram(label string, histogram map[string]int, MLName string, MLValue string) string {
 	output := fmt.Sprintf(`
 # HELP %s histogram output
 # TYPE %s histogram`, label, label)
@@ -67,12 +79,12 @@ func makePromHistogram(label string, histogram map[string]int, datatype string, 
 		bounds = append(bounds, bound)
 	}
 	sort.Strings(bounds)
-	labelname = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(labelname, "")
-	if datatype=="1"{
-		datatype=labelname
+	MLName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(MLName, "")
+	if MLValue == "1" {
+		MLValue = MLName
 	}
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(labelname, "bt"), datatype, histogram[bound])
+		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(MLName, "bt"), MLValue, histogram[bound])
 		output += "\n" + entry
 	}
 	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
@@ -80,43 +92,39 @@ func makePromHistogram(label string, histogram map[string]int, datatype string, 
 	return output
 }
 
-func makePromGauge(label string, value string) string {
+func makePromGauge(label string, value string, MLName string, MLValue string) string {
+	var entry string
 	output := fmt.Sprintf(`
 # HELP %s gauge output
-# TYPE %s gauge\n`, label, label)
-	entry := fmt.Sprintf(`%s%s %s`, output, label, value)
+# TYPE %s gauge`, label, label)
+	if len(MLName) > 0 {
+		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, value)
+	} else {
+		entry = fmt.Sprintf("%s\n%s %s", output, label, value)
+	}
 	return entry + "\n"
 }
 
 func GenericPromDataParser(structure HandlerStructure) string {
 	var data string
-	for j := 0; j < len(structure); j++ {
+	for i := 0; i < len(structure); i++ {
 		{
 			var op string
-			//Reflect the struct
-			typeExtract := reflect.TypeOf(structure[j].Structure)
-			valueExtract := reflect.ValueOf(structure[j].Structure)
-
-			//Iterating over fields and compress their values
-			for i := 0; i < typeExtract.NumField(); i++ {
-				fieldType := typeExtract.Field(i)
-				fieldValue := valueExtract.Field(i)
-
-				promType := fieldType.Tag.Get("type")
-				promLabel := fieldType.Tag.Get("metric")
-				switch promType {
-				case "histogram":
-					histogram := parseHistogram(fieldValue)
-					op += makePromHistogram(promLabel, histogram, structure[j].Datatype, structure[j].Labelname)
-				case "counter":
-					count := parseCounter(fieldValue)
-					op += makePromCounter(promLabel, count)
-				case "gauge":
-					value := parseGauge(fieldValue)
-					op += makePromGauge(promLabel, value)
-				case "untype":
-					op += makePromUntype(promLabel, fieldValue)
-				}
+			promType := structure[i].MType			// Gets the MetricType from HandlerStructure Structure
+			promLabel := structure[i].MName			// Gets the MetricName from HandlerStructure Structure
+			fieldValue := reflect.ValueOf(structure[i].MValue)	// Gets the MetricValue from HandlerStructure Structur		
+			switch promType {
+			case HISTOGRAM:
+				histogram := parseHistogram(fieldValue)
+				op += makePromHistogram(promLabel, histogram, structure[i].MLName, structure[i].MLValue)
+			case COUNTER:
+				count := parseCounter(fieldValue)
+				op += makePromCounter(promLabel, count, structure[i].MLName, structure[i].MLValue)
+			case GAUGE:
+				value := parseGauge(fieldValue)
+				op += makePromGauge(promLabel, value, structure[i].MLName, structure[i].MLValue)
+			case UNTYPE:
+				op += makePromUntype(promLabel, fieldValue)
 			}
 			data = data + op
 		}

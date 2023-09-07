@@ -1,21 +1,24 @@
-A parser that parse go structures to prometheus exposition format. For now, we only support data models Counter, Gauge and Histogram. It uses the go structure tags to identify the type of prometheus metric for each
-entry in the struct field. Note : This parsers only parses provide text output, Its responsibilty of the user to start the http service to publish
+A parser that parses go structures to prometheus exposition format. For now, we only support data models Counter, Gauge and Histogram.  
+Note : This parsers only parses provide text output, Its responsibilty of the user to start the http service to publish
 the text in /metrics.
 
+- Constants Defined 
+```
+	HISTOGRAM 
+	GAUGE 
+	COUNTER
+	UNTYPE
+```
+- Append data to variable of type HandlerStructure
 
-type <structName> struct {
- Field1 <dataType> `type:<metricType> metric:<metricName>`
-}
-
-Following provides examples of different metric types we support. 
-
-type Export struct {
- Field1 map[string]int `type:"Histogram" metric:"Field1"`
- Field2 int `type:"Counter" metric:"Field2"`
- Field3 int `type:"Gauge" metric:"Field3"`
-}
-
-
+```
+    addToHandler = append(addToHandler, struct {
+       MType   int
+	   MName   string
+	   MLName  string
+	   MLValue string
+	   MValue  interface{}
+    }{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 2, MLValue: "labelvalue", MLName: "labelname"})
+```
 To use this library user has to pass the structure defined as per above guidelines and filled with values to following function
-func GenericPromDataParser(structure interface{}) string
-The above function expects two arguments the structure to be parsed and labels to be added to all metrics
+func GenericPromDataParser(structure HandlerStructure) string
