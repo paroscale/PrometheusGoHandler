@@ -59,12 +59,11 @@ func makePromCounter(label string, count string, MLName string, MLValue string) 
 	var entry string
 	output := fmt.Sprintf(`
 # HELP %s counter output
-# TYPE %s counter
-`, label, label)
+# TYPE %s counter`, label, label)
 	if len(MLName) > 0 {
-		entry = fmt.Sprintf(`%s%s{%s="%s"} %s`, output, label, MLName, MLValue, count)
+		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, count)
 	} else {
-		entry = fmt.Sprintf(`%s%s %s`, output, label, count)
+		entry = fmt.Sprintf("%s\n%s %s", output, label, count)
 	}
 	return entry + "\n"
 }
@@ -97,12 +96,11 @@ func makePromGauge(label string, value string, MLName string, MLValue string) st
 	var entry string
 	output := fmt.Sprintf(`
 # HELP %s gauge output
-# TYPE %s gauge 
-`, label, label)
+# TYPE %s gauge`, label, label)
 	if len(MLName) > 0 {
-		entry = fmt.Sprintf(`%s%s{%s="%s"} %s`, output, label, MLName, MLValue, value)
+		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, value)
 	} else {
-		entry = fmt.Sprintf(`%s%s %s`, output, label, value)
+		entry = fmt.Sprintf("%s\n%s %s", output, label, value)
 	}
 	return entry + "\n"
 }
