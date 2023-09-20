@@ -84,11 +84,12 @@ func makePromHistogram(label string, histogram map[string]int, MLName string, ML
 		MLValue = MLName
 	}
 	for _, bound := range bounds {
-		entry := fmt.Sprintf(`%s_bucket{le="%s", %s="%s"} %d`, label, bound, strings.TrimRight(MLName, "bt"), MLValue, histogram[bound])
-		output += "\n" + entry
-	}
-	entry := fmt.Sprintf("%s_count %d", label, histogram["+inf"])
-	output += "\n\n" + entry + "\n"
+        entry := fmt.Sprintf(`%s_bucket{%s="%s", le="%s",} %d`, label, strings.TrimRight(MLName, "bt"), MLValue, bound,  histogram[bound])
+        output += "\n" + entry
+    }
+    entry1 := fmt.Sprintf(`%s_sum{%s="%s"} %d`, label,strings.TrimRight(MLName, "bt"), MLValue, histogram["+inf"])
+    entry2 := fmt.Sprintf(`%s_count{%s="%s"} %d`, label,strings.TrimRight(MLName, "bt"), MLValue, histogram["+inf"])
+    output += "\n" + entry1 + "\n"+ entry2 + "\n"
 	return output
 }
 
