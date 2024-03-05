@@ -5,24 +5,24 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strings"
 	//"strconv"
 	//"strings"
 )
 
-const (				// constants defined for Metrics
+const ( // constants defined for Metrics
 	HISTOGRAM = 0
 	COUNTER   = 1
 	GAUGE     = 2
 	UNTYPE    = 3
 )
 
-type HandlerStructure []struct {		
-	MType   int				// Field to store the Metric Type
-	MName   string			// Field to store Metric Name 
-	MLName  string			// Field to store MetricLabel Name
-	MLValue string			// Field to store MetricLabel Value
-	MValue  interface{}		// Field to store Metric Value
+type HandlerStructure []struct {
+	MType    int               // Field to store the Metric Type
+	MName    string            // Field to store Metric Name
+	MLName   string            // Field to store MetricLabel Name
+	MLValue  string            // Field to store MetricLabel Value
+	LabelMap map[string]string // Map to store Metric Labels
+	MValue   interface{}       // Field to store Metric Value
 }
 
 func parseCounter(count reflect.Value) string {
@@ -68,28 +68,45 @@ func makePromCounter(label string, count string, MLName string, MLValue string) 
 	return entry + "\n"
 }
 
-func makePromHistogram(label string, histogram map[string]int, MLName string, MLValue string) string {
-	output := fmt.Sprintf(`
-# HELP %s histogram output
-# TYPE %s histogram`, label, label)
-
+func makePromHistogram(label string, histogram map[string]int, labelData map[string]string) string {
+	label = regexp.MustCompile(`[^a-zA-Z0-9_ ]+`).ReplaceAllString(label, "")
+	// output := fmt.Sprintf(`
+	// # HELP %s histogram output
+	// # TYPE %s histogram`, label, label)
+	var output, labelStr string
 	//Sort bound
 	var bounds []string
 	for bound, _ := range histogram {
 		bounds = append(bounds, bound)
 	}
 	sort.Strings(bounds)
-	MLName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(MLName, "")
-	if MLValue == "1" {
-		MLValue = MLName
+	// MLName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(MLName, "")
+	// if MLValue == "1" {
+	// 	MLValue = MLName
+	// }
+	for k, v := range labelData {
+		labelStr += fmt.Sprintf(`%s="%s", `, k, v)
 	}
+
 	for _, bound := range bounds {
-        entry := fmt.Sprintf(`%s_bucket{%s="%s", le="%s",} %d`, label, strings.TrimRight(MLName, "bt"), MLValue, bound,  histogram[bound])
-        output += "\n" + entry
-    }
-    entry1 := fmt.Sprintf(`%s_sum{%s="%s"} %d`, label,strings.TrimRight(MLName, "bt"), MLValue, histogram["+inf"])
-    entry2 := fmt.Sprintf(`%s_count{%s="%s"} %d`, label,strings.TrimRight(MLName, "bt"), MLValue, histogram["+inf"])
-    output += "\n" + entry1 + "\n"+ entry2 + "\n"
+		var entry string
+		if len(labelData) > 0 {
+			entry = fmt.Sprintf(`%s_bucket{%s le="%s"} %d`, label, labelStr, bound, histogram[bound])
+		} else {
+			entry = fmt.Sprintf(`%s_bucket{le="%s"} %d`, label, bound, histogram[bound])
+		}
+		output += "\n" + entry
+	}
+
+	var entry1, entry2 string
+	if len(labelData) > 0 {
+		entry1 = fmt.Sprintf(`%s_sum{%s} %d`, label, labelStr, histogram["+inf"])
+		entry2 = fmt.Sprintf(`%s_count{%s} %d`, label, labelStr, histogram["+inf"])
+	} else {
+		entry1 = fmt.Sprintf(`%s_sum %d`, label, histogram["+inf"])
+		entry2 = fmt.Sprintf(`%s_count %d`, label, histogram["+inf"])
+	}
+	output += "\n" + entry1 + "\n" + entry2 + "\n"
 	return output
 }
 
@@ -111,13 +128,13 @@ func GenericPromDataParser(structure HandlerStructure) string {
 	for i := 0; i < len(structure); i++ {
 		{
 			var op string
-			promType := structure[i].MType			// Gets the MetricType from HandlerStructure Structure
-			promLabel := structure[i].MName			// Gets the MetricName from HandlerStructure Structure
-			fieldValue := reflect.ValueOf(structure[i].MValue)	// Gets the MetricValue from HandlerStructure Structur		
+			promType := structure[i].MType                     // Gets the MetricType from HandlerStructure Structure
+			promLabel := structure[i].MName                    // Gets the MetricName from HandlerStructure Structure
+			fieldValue := reflect.ValueOf(structure[i].MValue) // Gets the MetricValue from HandlerStructure Structur
 			switch promType {
 			case HISTOGRAM:
 				histogram := parseHistogram(fieldValue)
-				op += makePromHistogram(promLabel, histogram, structure[i].MLName, structure[i].MLValue)
+				op += makePromHistogram(promLabel, histogram, structure[i].LabelMap)
 			case COUNTER:
 				count := parseCounter(fieldValue)
 				op += makePromCounter(promLabel, count, structure[i].MLName, structure[i].MLValue)
