@@ -20,7 +20,6 @@ func main() {
 	lm := make(map[string]string)
 	lm["Label1"] = "value1"
 	lm["Label2"] = "value2"
-
 	Hist.Num0 = 1
 	Hist.Num2 = 2
 	Hist.Num4 = 3
@@ -32,8 +31,6 @@ func main() {
 	addToHandler = append(addToHandler, struct {
 		MType    int
 		MName    string
-		MLName   string
-		MLValue  string
 		LabelMap map[string]string
 		MValue   interface{}
 	}{MType: prometheus_handler.HISTOGRAM, MName: "hist_field1", MValue: histmap, LabelMap: lm})

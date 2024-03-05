@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	//"strconv"
-	//"strings"
 )
 
 const ( // constants defined for Metrics
@@ -19,8 +17,6 @@ const ( // constants defined for Metrics
 type HandlerStructure []struct {
 	MType    int               // Field to store the Metric Type
 	MName    string            // Field to store Metric Name
-	MLName   string            // Field to store MetricLabel Name
-	MLValue  string            // Field to store MetricLabel Value
 	LabelMap map[string]string // Map to store Metric Labels
 	MValue   interface{}       // Field to store Metric Value
 }
@@ -55,13 +51,16 @@ func makePromUntype(label string, value reflect.Value) string {
 	return output
 }
 
-func makePromCounter(label string, count string, MLName string, MLValue string) string {
-	var entry string
+func makePromCounter(label string, count string, labelData map[string]string) string {
+	var entry, labelStr string
 	output := fmt.Sprintf(`
 # HELP %s counter output
 # TYPE %s counter`, label, label)
-	if len(MLName) > 0 {
-		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, count)
+	for k, v := range labelData {
+		labelStr += fmt.Sprintf(`%s="%s", `, regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(k, ""), v)
+	}
+	if len(labelData) > 0 {
+		entry = fmt.Sprintf("%s\n%s{%s} %s", output, label, labelStr, count)
 	} else {
 		entry = fmt.Sprintf("%s\n%s %s", output, label, count)
 	}
@@ -70,22 +69,18 @@ func makePromCounter(label string, count string, MLName string, MLValue string) 
 
 func makePromHistogram(label string, histogram map[string]int, labelData map[string]string) string {
 	label = regexp.MustCompile(`[^a-zA-Z0-9_ ]+`).ReplaceAllString(label, "")
-	// output := fmt.Sprintf(`
-	// # HELP %s histogram output
-	// # TYPE %s histogram`, label, label)
 	var output, labelStr string
+	output = fmt.Sprintf(`
+# HELP %s histogram output
+# TYPE %s histogram`, label, label)
 	//Sort bound
 	var bounds []string
-	for bound, _ := range histogram {
+	for bound := range histogram {
 		bounds = append(bounds, bound)
 	}
 	sort.Strings(bounds)
-	// MLName = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(MLName, "")
-	// if MLValue == "1" {
-	// 	MLValue = MLName
-	// }
 	for k, v := range labelData {
-		labelStr += fmt.Sprintf(`%s="%s", `, k, v)
+		labelStr += fmt.Sprintf(`%s="%s", `, regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(k, ""), v)
 	}
 
 	for _, bound := range bounds {
@@ -110,13 +105,16 @@ func makePromHistogram(label string, histogram map[string]int, labelData map[str
 	return output
 }
 
-func makePromGauge(label string, value string, MLName string, MLValue string) string {
-	var entry string
+func makePromGauge(label string, value string, labelData map[string]string) string {
+	var entry, labelStr string
 	output := fmt.Sprintf(`
 # HELP %s gauge output
 # TYPE %s gauge`, label, label)
-	if len(MLName) > 0 {
-		entry = fmt.Sprintf("%s\n%s{%s=\"%s\"} %s", output, label, MLName, MLValue, value)
+	for k, v := range labelData {
+		labelStr += fmt.Sprintf(`%s="%s", `, regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(k, ""), v)
+	}
+	if len(labelData) > 0 {
+		entry = fmt.Sprintf("%s\n%s{%s} %s", output, label, labelStr, value)
 	} else {
 		entry = fmt.Sprintf("%s\n%s %s", output, label, value)
 	}
@@ -137,10 +135,10 @@ func GenericPromDataParser(structure HandlerStructure) string {
 				op += makePromHistogram(promLabel, histogram, structure[i].LabelMap)
 			case COUNTER:
 				count := parseCounter(fieldValue)
-				op += makePromCounter(promLabel, count, structure[i].MLName, structure[i].MLValue)
+				op += makePromCounter(promLabel, count, structure[i].LabelMap)
 			case GAUGE:
 				value := parseGauge(fieldValue)
-				op += makePromGauge(promLabel, value, structure[i].MLName, structure[i].MLValue)
+				op += makePromGauge(promLabel, value, structure[i].LabelMap)
 			case UNTYPE:
 				op += makePromUntype(promLabel, fieldValue)
 			}
