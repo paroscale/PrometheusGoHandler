@@ -8,8 +8,7 @@ To Import a Histogram using the Promethues Handler, Follow the Steps Below.
 	type HandlerStructure []struct {
 		MType   int
 		MName   string
-		MLName  string
-		MLValue string
+		LabelMap map[string]string
 		MValue  interface{}
 	}
 	var addToHandler prometheus_handler.HandlerStructure
@@ -22,7 +21,7 @@ To Import a Histogram using the Promethues Handler, Follow the Steps Below.
 			MLName  string
 			MLValue string
 			MValue  interface{}
-		}{MType: prometheus_handler.HISTOGRAM, MName: "Field1", MValue: histmap, MLValue: dataType, MLName: labelName})
+		}{MType: prometheus_handler.HISTOGRAM, MName: "Field1", MValue: histmap, LabelMap: labelmap})
 ```
 - Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the `MTYPE` field to `HISTOGRAM`
 
@@ -43,12 +42,13 @@ map[1:2 2:3 3:1]
 - This is the Output which will be given back from `func GenericPromDataParser`
 
 ```
-# HELP Field1 histogram output
-# TYPE Field1 histogram
-Field1_bucket{le="+inf"} 6
-Field1_bucket{le="1"} 2
-Field1_bucket{le="2"} 3
-Field1_bucket{le="3"} 1
+# HELP hist_field1 histogram output
+# TYPE hist_field1 histogram
+hist_field1_bucket{Label1="value1", Label2="value2",  le="+inf"} 6
+hist_field1_bucket{Label1="value1", Label2="value2",  le="1"} 2
+hist_field1_bucket{Label1="value1", Label2="value2",  le="2"} 3
+hist_field1_bucket{Label1="value1", Label2="value2",  le="3"} 1
+hist_field1_sum{Label1="value1", Label2="value2", } 6
+hist_field1_count{Label1="value1", Label2="value2", } 6
 
-Field1_count 6
 ```

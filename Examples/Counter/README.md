@@ -8,8 +8,7 @@ To Import a Counter using the Promethues Handler, Follow the Steps Below.
 	type HandlerStructure []struct {
 		MType   int
 		MName   string
-		MLName  string
-		MLValue string
+		LabelMap map[string]string
 		MValue  interface{}
 	}
 	var addToHandler prometheus_handler.HandlerStructure
@@ -20,10 +19,9 @@ To Import a Counter using the Promethues Handler, Follow the Steps Below.
 	addToHandler = append(addToHandler, struct {
 		MType   int
 		MName   string
-		MLName  string
-		MLValue string
+		LabelMap map[string]string
 		MValue  interface{}
-	}{MType: prometheus_handler.COUNTER, MName: "Field1", MValue: 20, MLValue: dataType, MLName: labelName})
+	}{MType: prometheus_handler.COUNTER, MName: "Field1", MValue: 20, LabelMap: labelmap})
 ```
 
 - Pass the HandlerStructure and Call the Function `func GenericPromDataParser(structure HandleStructure) string` and set the `MTYPE` field to `COUNTER`
@@ -72,38 +70,13 @@ Field1 10
 ```
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 0
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 1
-
+Field1{Label1="value1", Label2="value2", } 0
 
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 2
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 3
-
-.
-.
-.
-.
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 7
-
+Field1{Label1="value1", Label2="value2", } 1
 
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 8
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 9
+Field1{Label1="value1", Label2="value2", } 2
 ```
