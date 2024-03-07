@@ -70,38 +70,13 @@ Field1 10
 ```
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 0
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 1
-
+Field1{Label1="value1", Label2="value2", } 0
 
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 2
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 3
-
-.
-.
-.
-.
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 7
-
+Field1{Label1="value1", Label2="value2", } 1
 
 # HELP Field1 counter output
 # TYPE Field1 counter
-Field1{counter="test counter"} 8
-
-
-# HELP Field1 counter output
-# TYPE Field1 counter
-Field1{counter="test counter"} 9
+Field1{Label1="value1", Label2="value2", } 2
 ```

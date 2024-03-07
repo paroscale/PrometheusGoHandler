@@ -90,6 +90,10 @@ Field1 1
 
 ```
 # HELP Field1 gauge output
-# TYPE Field1 gauge 
-Field1{label="labelValue"} 0
+# TYPE Field1 gauge
+Field1{Label1="value1", Label2="value2", } 0
+
+# HELP Field1 gauge output
+# TYPE Field1 gauge
+Field1{Label1="value1", Label2="value2", } 1
 ```
