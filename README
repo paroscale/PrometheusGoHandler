@@ -11,11 +11,10 @@ the text in /metrics.
 - Append data to variable of type HandlerStructure
     addToHandler = append(addToHandler, struct {
            MType   int
-	   MName   string
-	   MLName  string
-	   MLValue string
-	   MValue  interface{}
-    }{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 2, MLValue: "labelvalue", MLName: "labelname"})
+	  	   MName   string
+	       LabelMap map[string]string
+	       MValue  interface{}
+    }{MType: prometheus_handler.GAUGE, MName: "Field1", MValue: 2, LabelMap: labelMap})
 
 To use this library user has to pass the structure defined as per above guidelines and filled with values to following function
 func GenericPromDataParser(structure HandlerStructure) string
